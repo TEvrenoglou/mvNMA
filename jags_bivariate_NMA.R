@@ -77,10 +77,6 @@ model{
   # Parameterization of the means
   
   for(i in 1:N2h) { 
-  
-    # mean[2*i-1] <- -d1[T2[i]] + d1[T1[i]]
-    # 
-    # mean[2*i] <- -d2[T2[i]]+ d2[T1[i]]
     
     mean[2*i-1] <- d1[T2[i]] - d1[T1[i]]
     
