@@ -170,19 +170,29 @@ jags_data <- function(dat){
   
   y <- dat$new_data$TE
   
+  dat_out <- list()
+  
   var <- list()
+  
+  treat_out <- list()
   
   names_vec <- c()
   
   for(i in 1:n_outcomes){
     
-    var[[i]] <- dat$new_data[dat$new_data$outcome==i,]$seTE^2
+    dat_out[[i]] <- dat$new_data[dat$new_data$outcome==i,]
+    
+    var[[i]] <- dat_out[[i]]$seTE^2
     
     var[[i]] <- ifelse(is.na(var[[i]]),10000,var[[i]])
     
     names_vec[i] <- paste("var",i,sep = "")
     
-  }
+    dat_out[[i]] <- dat_out[[i]][complete.cases(dat_out[[i]]$TE),]
+    
+    treat_out[[i]] <- unique(c(dat_out[[i]]$treat1,dat_out[[i]]$treat2))
+  
+    }
   
   var_f <- list.cbind(var) 
   
@@ -198,7 +208,8 @@ jags_data <- function(dat){
                 "Ns" = Ns,
                 "N2h" = two_arm,
                 "na" = arms,
-                "labtreat" = labtreat
+                "labtreat" = labtreat,
+                "treat_out" = treat_out
   )
   
   return(dat_f)
