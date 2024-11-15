@@ -14,9 +14,9 @@ source("helpers.R")
 
 source("jags_bivariate_NMA.R")
 
-#data <- read.csv("Data\\all_data_long.csv")
+data <- read.csv("Data\\all_data_long.csv")
 
-data <- read.csv("Data\\dat2arm.csv")
+#data <- read.csv("Data\\dat2arm.csv")
 
 
 dat <- mvdata(data = data,
@@ -27,7 +27,9 @@ dat <- mvdata(data = data,
               treat = treat
 )
 
-ref <- unname(which(dat$labtreat=="Placebo"))
+reference.group <- "Placebo"
+
+ref <- unname(which(dat$labtreat==reference.group))
 
 run.data <- list(
   
@@ -39,7 +41,7 @@ run.data <- list(
   N2h = dat$N2h,
   T1 = dat$T[,1],
   T2 = dat$T[,2],
-  #T3 = dat$T[,3],
+  T3 = dat$T[,3],
   NT = length(unique(dat$labtreat))
   
 )
@@ -59,8 +61,8 @@ run = jags(
     "d2"
   ),
   n.chains = 2,
-  n.iter = 50000,
-  n.burnin = 10000,
+  n.iter = 10000,
+  n.burnin = 2000,
   DIC = F,
   model.file = modfile
 )
@@ -78,11 +80,19 @@ basic_comp_1 = results %>%
 
 row.names(basic_comp_1) <- dat$labtreat[-ref]
 
+dat_treat1 <- dat$treat_out[[1]][-which(dat$treat_out[[1]]==reference.group)]
+
+basic_comp_1 <- basic_comp_1[which(row.names(basic_comp_1) %in% dat_treat1),]
 
 basic_comp_2 = results %>%
   filter(grepl("ref2", ind))
 
 row.names(basic_comp_2) <- dat$labtreat[-ref]
+
+dat_treat2 <- dat$treat_out[[2]][-which(dat$treat_out[[2]]==reference.group)]
+
+basic_comp_2 <- basic_comp_2[which(row.names(basic_comp_2) %in% dat_treat2),]
+
 
 ## all results 
 all_res1 <- results %>% 
@@ -92,7 +102,6 @@ all_res1 <- results %>%
 
 psi <- results %>%
   filter(grepl(c("psi"), ind))
-
 
 ## rho
 
@@ -109,5 +118,18 @@ d2 <- sims_bugs_out[,c(grepl("d2", names(sims_bugs_out)))]
 
 names(d1) <- names(d2) <-  dat$labtreat
 
+d1 <- d1 %>% 
+  dplyr::select(all_of(dat$treat_out[[1]]))
 
+d2 <- d2 %>% 
+  dplyr::select(all_of(dat$treat_out[[2]]))
 
+d1 <- as.matrix(d1)
+
+d2 <- as.matrix(d2)
+
+#rank1 <- rankogram(d1, pooled = "random", small.values = "undesirable")
+
+#rank2 <- rankogram(d2, pooled = "random", small.values = "desirable")
+       
+# plot(rank1)
